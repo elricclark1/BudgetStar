@@ -1,5 +1,7 @@
 # BudgetStar
 
+**Live Demo:** [https://budgetstar.serpilas.com](https://budgetstar.serpilas.com)
+
 BudgetStar is a personal finance dashboard and budgeting application designed to track spending, manage financial goals, monitor savings, and project future income.
 
 ## Key Features
