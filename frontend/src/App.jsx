@@ -34,7 +34,7 @@ import {
 } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
 import { useDisclosure } from '@mantine/hooks'
-import { IconPlus, IconDashboard, IconList, IconSettings, IconDatabase, IconChevronDown, IconChevronUp, IconChartHistogram, IconTrash, IconFileDownload, IconTarget, IconRepeat, IconMessageChatbot, IconX, IconSend, IconCar, IconFilter, IconPencil, IconInfoCircle, IconCoin, IconReportMoney, IconCalculator, IconPigMoney } from '@tabler/icons-react'
+import { IconPlus, IconDashboard, IconList, IconSettings, IconDatabase, IconChevronDown, IconChevronUp, IconChartHistogram, IconTrash, IconFileDownload, IconTarget, IconRepeat, IconMessageChatbot, IconX, IconSend, IconCar, IconFilter, IconPencil, IconInfoCircle, IconCoin, IconReportMoney, IconCalculator, IconPigMoney, IconUpload, IconDownload } from '@tabler/icons-react'
 import axios from 'axios'
 import dayjs from 'dayjs'
 import 'dayjs/locale/en'
@@ -190,7 +190,7 @@ function App() {
   
   const [settings, setSettings] = useState(() => {
     const defaultSettings = {
-      tithingEnabled: true,
+      tithingEnabled: false,
       savingsEnabled: true,
       manualIncome: '3000',
       paymentMethods: ['Cash', 'Credit Card', 'Debit Card', 'Bank Transfer', 'Venmo']
@@ -779,10 +779,17 @@ function App() {
             />
           )}
           <NavLink
-            label="Settings & Info"
+            label="Settings"
             leftSection={<IconSettings size="1rem" />}
             active={view === 'settings'}
             onClick={() => setView('settings')}
+            styles={{ label: { fontWeight: 600 } }}
+          />
+          <NavLink
+            label="Info & Help"
+            leftSection={<IconInfoCircle size="1rem" />}
+            active={view === 'info'}
+            onClick={() => setView('info')}
             styles={{ label: { fontWeight: 600 } }}
           />
           <Divider my="sm" color="#222222" />
@@ -1519,7 +1526,7 @@ ${transactions.map(t =>
     reader.readAsText(file);
   };
 
-  const renderSettingsAndInfo = () => {
+  const renderSettings = () => {
     return (
       <Stack gap="xl">
         <Paper p="xl" withBorder style={{ backgroundColor: '#121212', borderColor: '#2A2A2A' }}>
@@ -1640,7 +1647,13 @@ ${transactions.map(t =>
             </Group>
           </Paper>
         </Paper>
-        
+      </Stack>
+    );
+  };
+
+  const renderInfo = () => {
+    return (
+      <Stack gap="xl">
         <Paper p="xl" withBorder style={{ backgroundColor: '#121212', borderColor: '#2A2A2A' }}>
           <Title order={3} mb="md" style={{ color: ACCENT_COLOR }}>About BudgetStar</Title>
           <Text mb="lg">
@@ -1673,93 +1686,70 @@ ${transactions.map(t =>
           <Stack gap="md">
               <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333' }}>
                   <Group justify="space-between">
+                      <Text fw={700}>v1.1</Text>
+                      <Text size="xs" c="dimmed">June 13, 2026</Text>
+                  </Group>
+                  <Text size="sm" mt="xs">
+                      • Disabled LDS Tithing & Income Inference by default to improve general user onboarding.<br />
+                      • Separated Settings and Info & Help sections into their own dedicated pages.<br />
+                      • Added top-level Upload CSV and Download CSV buttons for quick and easy browser data management.
+                  </Text>
+              </Paper>
+              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.8 }}>
+                  <Group justify="space-between">
+                      <Text fw={700}>v1.0 (General Release)</Text>
+                      <Text size="xs" c="dimmed">June 13, 2026</Text>
+                  </Group>
+                  <Text size="sm" mt="xs">
+                      • Ported private application into a generic local & hosted version.<br />
+                      • Decoupled SQLite backend dependencies to support zero-config Standalone Mode (using browser `localStorage`).<br />
+                      • Removed private family/user profiles and hardcoded bank settings.<br />
+                      • Introduced customizable payment methods manager, JSON backup/restore, and CSV import/export settings.
+                  </Text>
+              </Paper>
+              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.6 }}>
+                  <Group justify="space-between">
                       <Text fw={700}>v5.4</Text>
                       <Text size="xs" c="dimmed">June 12, 2026</Text>
                   </Group>
                   <Text size="sm" mt="xs">
-                      • Added **Savings Locations & Account Management** support! You can now specify which savings account/location your savings entry belongs to (e.g., Cash, Capital One performance, Rogue savings, Rogue ownership).<br />
-                      • Integrated dynamic **Add & Remove Savings Accounts** panel directly inside the Savings tab, letting you manage your savings locations dynamically.<br />
-                      • Prepopulated default accounts (Cash, Capital One performance, Rogue savings, Rogue ownership) on first run.<br />
+                      • Added **Savings Locations & Account Management** support! You can now specify which savings account/location your savings entry belongs to.<br />
+                      • Integrated dynamic **Add & Remove Savings Accounts** panel inside the Savings tab.<br />
                       • Added location column to the Savings checkpoints history log table.<br />
-                      • Enhanced **Current Savings Balance** metric to calculate the sum of the latest balances for all active accounts.<br />
-                      • Refined **Savings Growth Trend** chart to compute and plot the cumulative total of all accounts chronologically over time.
+                      • Enhanced **Current Savings Balance** metric to calculate the sum of the latest balances for all active accounts.
                   </Text>
               </Paper>
-              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.8 }}>
+              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.4 }}>
                   <Group justify="space-between">
                       <Text fw={700}>v5.3</Text>
                       <Text size="xs" c="dimmed">June 12, 2026</Text>
                   </Group>
                   <Text size="sm" mt="xs">
-                      • Added **Reimbursed Transactions** support! You can now check "Reimbursed?" when adding/editing transactions and enter the reimbursement amount. Spending and pacing calculations throughout the application now calculate automatically based on net spending (original amount minus reimbursement amount).<br />
-                      • Added a dedicated **Reimbursed Transactions Log** table under the "Income & Tithing Analysis" tab showing all reimbursed transactions, their reimbursement amount, and net cost/loss.<br />
-                      • Integrated a new **Savings Tracker** view on the sidebar, allowing you to log your current savings checkpoints over time. It includes a beautiful dynamic **Savings Growth Trend** area chart and a full log table to view, edit, or delete entries.
+                      • Added **Reimbursed Transactions** support! You can now check "Reimbursed?" when adding/editing transactions.<br />
+                      • Added a dedicated **Reimbursed Transactions Log** table under the "Income & Tithing Analysis" tab.<br />
+                      • Integrated a new **Savings Tracker** view on the sidebar, allowing you to log your current savings checkpoints over time.
                   </Text>
               </Paper>
-              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.8 }}>
+              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.4 }}>
                   <Group justify="space-between">
                       <Text fw={700}>v5.2</Text>
                       <Text size="xs" c="dimmed">June 11, 2026</Text>
                   </Group>
                   <Text size="sm" mt="xs">
-                      • Added a **detailed custom tooltip** to the Monthly Income & Spending graph. Hovering over a month now displays Gross Income, Tithing Paid, Net Income, Living Spending, Total Spending, and the calculated Spending-to-Net-Income Ratio.<br />
-                      • Added **Spending-to-Net-Income Ratio** indicator directly inside the "Living Spending" summary card on the Income tab (reacts to active time range and user filters).<br />
-                      • Appended **Living / Net Ratio** column to the monthly breakdown log table, indicating surplus/deficit performance per month.
+                      • Added a **detailed custom tooltip** to the Monthly Income & Spending graph.<br />
+                      • Added **Spending-to-Net-Income Ratio** indicator inside the "Living Spending" summary card.<br />
+                      • Appended **Living / Net Ratio** column to the monthly breakdown log table.
                   </Text>
               </Paper>
-              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.8 }}>
+              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.4 }}>
                   <Group justify="space-between">
                       <Text fw={700}>v5.1</Text>
                       <Text size="xs" c="dimmed">June 11, 2026</Text>
                   </Group>
                   <Text size="sm" mt="xs">
-                      • Added <b>Daily Pace Limit</b> widget to the main Dashboard showing remaining hypothetical daily spending limits based on the 3-month average budget.<br />
+                      • Added <b>Daily Pace Limit</b> widget to the main Dashboard showing remaining daily limits.<br />
                       • Integrated a daily pace target indicator inside the "Monthly Pace" widget.<br />
-                      • Removed the "Income and Savings" summary card from the main Dashboard header to return the primary layout to 4 core spend-related cards + 1 daily limit helper card.
-                  </Text>
-              </Paper>
-              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.6 }}>
-                  <Group justify="space-between">
-                      <Text fw={700}>v5.0b</Text>
-                      <Text size="xs" c="dimmed">June 11, 2026</Text>
-                  </Group>
-                  <Text size="sm" mt="xs">
-                      • Added <b>Income & Tithing Analysis</b> tab comparing calculated Gross/Net income (derived from LDS tithing paid) vs spending.<br />
-                      • Integrated a dynamic grouped bar chart and an income allocation breakdown chart.<br />
-                      • Built an interactive Tithing & Income Scenario Planner/Estimator.<br />
-                      • Decoupled tithing calculations from active category filter selections to ensure continuous accuracy.<br />
-                      • Enhanced UI aesthetics with subtle card hover effects and interactive note status indicators in the transaction log.
-                  </Text>
-              </Paper>
-              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.4 }}>
-                  <Group justify="space-between">
-                      <Text fw={700}>v4.1</Text>
-                      <Text size="xs" c="dimmed">June 2, 2026</Text>
-                  </Group>
-                  <Text size="sm" mt="xs">
-                      • Updated "Monthly Pace" card to evaluate pacing against the average of the past 3 complete months rather than the overall average.<br />
-                      • Integrated live 3-month average indicator in the pacing metric widget.
-                  </Text>
-              </Paper>
-              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.3 }}>
-                  <Group justify="space-between">
-                      <Text fw={700}>v3.2</Text>
-                      <Text size="xs" c="dimmed">May 27, 2026</Text>
-                  </Group>
-                  <Text size="sm" mt="xs">
-                      • Reversed Goal progress bars to show remaining "battery" levels.<br />
-                      • Simplified Monthly Pace display to show only percentage.<br />
-                      • Added this Info page for project documentation and release tracking.
-                  </Text>
-              </Paper>
-              <Paper p="sm" withBorder style={{ backgroundColor: '#1A1A1A', borderColor: '#333', opacity: 0.2 }}>
-                  <Group justify="space-between">
-                      <Text fw={700}>v3.1</Text>
-                      <Text size="xs" c="dimmed">May 11, 2026</Text>
-                  </Group>
-                  <Text size="sm" mt="xs">
-                      • Added Assets tracking tab with full CRUD support.<br />
-                      • Improved widget-style UI for asset management.
+                      • Removed the "Income and Savings" summary card from the main Dashboard header.
                   </Text>
               </Paper>
           </Stack>
@@ -2211,11 +2201,35 @@ ${transactions.map(t =>
                  view === 'recurrings' ? 'Recurring Purchases' :
                  view === 'assets' ? 'Assets' :
                  view === 'savings' ? 'Savings Tracker' :
-                 view === 'settings' ? 'Settings & Info' :
+                 view === 'settings' ? 'Application Settings' :
+                 view === 'info' ? 'About & Info' :
                  view === 'data' ? 'Data Management' : 'Transaction Log'}
             </Title>
             
             <Group>
+              <input 
+                type="file" 
+                id="csv-import-file-header" 
+                style={{ display: 'none' }} 
+                accept=".csv" 
+                onChange={handleImportCSV} 
+              />
+              <Button 
+                variant="outline" 
+                color="orange" 
+                leftSection={<IconUpload size="1.1rem" />}
+                onClick={() => document.getElementById('csv-import-file-header').click()}
+              >
+                Upload CSV
+              </Button>
+              <Button 
+                variant="outline" 
+                color="indigo" 
+                leftSection={<IconDownload size="1.1rem" />}
+                onClick={handleExportCSV}
+              >
+                Download CSV
+              </Button>
               <Button 
                 leftSection={<IconPlus size="1.2rem" />} 
                 color={ACCENT_COLOR} 
@@ -3270,7 +3284,8 @@ ${transactions.map(t =>
             </Paper>
           )}
 
-          {view === 'settings' && renderSettingsAndInfo()}
+          {view === 'settings' && renderSettings()}
+          {view === 'info' && renderInfo()}
         </Container>
       </AppShell.Main>
     </AppShell>
