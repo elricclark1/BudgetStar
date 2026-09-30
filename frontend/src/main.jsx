@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/en'
 import '@mantine/core/styles.css'
 import '@mantine/dates/styles.css'
+import './index.css'
 import App from './App'
 
 // Force dayjs to use Sunday as the first day of the week for the 'en' locale
@@ -35,7 +36,7 @@ const theme = createTheme({
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <MantineProvider theme={theme} defaultColorScheme="dark">
-      <DatesProvider settings={{ firstDayOfWeek: 0, weekendDays: [0, 6], locale: 'en' }}>
+      <DatesProvider settings={{ firstDayOfWeek: 0, weekendDays: [0], locale: 'en' }}>
         <App />
       </DatesProvider>
     </MantineProvider>

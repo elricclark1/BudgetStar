@@ -2,17 +2,24 @@ version: '3.8'
 
 services:
   backend:
+    container_name: budgetstar-backend
     build: ./backend
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/budgetstar.db
     volumes:
-      - ./backend/budgetstar.db:/app/budgetstar.db
-    restart: always
+      - budgetstar_data:/app/data
+    restart: unless-stopped
 
   frontend:
+    container_name: budgetstar-frontend
     build: ./frontend
     ports:
-      - "3005:80"
+      - "${FRONTEND_PORT:-3000}:80"
     depends_on:
       - backend
-    restart: always
+    restart: unless-stopped
+
+volumes:
+  budgetstar_data:

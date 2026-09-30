@@ -1,0 +1,33 @@
+/* Calendar styling for DateInput / DatePicker */
+.mantine-DatePicker-day,
+.mantine-DateInput-day,
+.mantine-DatePicker-weekday,
+.mantine-DateInput-weekday,
+button[data-path="day"] {
+  color: #C1C2C5;
+}
+
+/* Only Sunday (data-weekend) is red */
+.mantine-DatePicker-day[data-weekend],
+.mantine-DateInput-day[data-weekend],
+.mantine-DatePicker-weekday[data-weekend],
+.mantine-DateInput-weekday[data-weekend],
+button[data-path="day"][data-weekend] {
+  color: #FA5252 !important;
+}
+
+/* Ensure non-weekend days (including Saturday) are grey */
+.mantine-DatePicker-day:not([data-weekend]),
+.mantine-DateInput-day:not([data-weekend]),
+.mantine-DatePicker-weekday:not([data-weekend]),
+.mantine-DateInput-weekday:not([data-weekend]),
+button[data-path="day"]:not([data-weekend]) {
+  color: #C1C2C5 !important;
+}
+
+/* Selected date retains high-contrast white text */
+.mantine-DatePicker-day[data-selected],
+.mantine-DateInput-day[data-selected],
+button[data-path="day"][data-selected] {
+  color: #FFFFFF !important;
+}

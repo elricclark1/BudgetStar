@@ -11,12 +11,17 @@ __pycache__/
 dist/
 build/
 
-# Database files
+# Database and local data
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
 sqlite.db
+data/
+
+# Environment files
+.env
+.env.local
 
 # Log files
 *.log
