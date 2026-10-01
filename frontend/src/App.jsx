@@ -73,7 +73,8 @@ import {
   IconCreditCard,
   IconAlertTriangle,
   IconCheck,
-  IconDeviceFloppy
+  IconDeviceFloppy,
+  IconBrandGithub
 } from '@tabler/icons-react'
 import axios from 'axios'
 import dayjs from 'dayjs'
@@ -256,7 +257,8 @@ export default function App() {
       tithingPercent: 10,
       savingsEnabled: true,
       manualIncome: '3500',
-      paymentMethods: ['Credit Card', 'Debit Card', 'Cash', 'Bank Transfer', 'Mobile Pay', 'Online Service']
+      paymentMethods: ['Credit Card', 'Debit Card', 'Cash', 'Bank Transfer', 'Mobile Pay', 'Online Service'],
+      customCategories: ['Groceries', 'Eat out', 'Fuel', 'Living/Utilities', 'Subscription', 'Fun', 'Clothing', 'Education', 'Transportation', 'Gift', 'Personal Care', 'Travel Vacation', 'Income', 'Giving', 'Other']
     };
     try {
       const saved = localStorage.getItem('budgetstar_settings');
@@ -265,6 +267,9 @@ export default function App() {
         // Ensure users array exists
         if (!parsed.users || !Array.isArray(parsed.users) || parsed.users.length === 0) {
           parsed.users = defaultSettings.users;
+        }
+        if (!parsed.customCategories || !Array.isArray(parsed.customCategories) || parsed.customCategories.length === 0) {
+          parsed.customCategories = defaultSettings.customCategories;
         }
         return { ...defaultSettings, ...parsed };
       }
@@ -988,6 +993,93 @@ export default function App() {
     e.target.value = '';
   };
 
+  // Full Backup & Restore Handlers (JSON: Configurations + Database Records)
+  const handleExportJSON = () => {
+    const backupData = {
+      version: '2.0.0',
+      application: 'BudgetStar',
+      exported_at: new Date().toISOString(),
+      settings: settings,
+      transactions: transactions,
+      goals: goals,
+      recurrings: recurrings,
+      assets: assets,
+      savings: savings,
+      savingsAccounts: savingsAccounts
+    };
+    const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", jsonString);
+    downloadAnchor.setAttribute("download", `budgetstar_complete_backup_${dayjs().format('YYYY-MM-DD')}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handleImportJSON = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (!data || typeof data !== 'object') {
+          return alert("Invalid JSON backup file format.");
+        }
+
+        // 1. Restore Configurations & Settings
+        if (data.settings && typeof data.settings === 'object') {
+          const newSettings = { ...settings, ...data.settings };
+          setSettings(newSettings);
+          setLocalData('budgetstar_settings', newSettings);
+        }
+
+        // 2. Restore Transactions
+        if (Array.isArray(data.transactions)) {
+          setTransactions(data.transactions);
+          setLocalData('budgetstar_transactions', data.transactions);
+          initializeFilters(data.transactions);
+        }
+
+        // 3. Restore Goals
+        if (Array.isArray(data.goals)) {
+          setGoals(sortGoalsByPerson(data.goals));
+          setLocalData('budgetstar_goals', data.goals);
+        }
+
+        // 4. Restore Subscriptions / Recurrings
+        if (Array.isArray(data.recurrings)) {
+          setRecurrings(data.recurrings);
+          setLocalData('budgetstar_recurrings', data.recurrings);
+        }
+
+        // 5. Restore Assets
+        if (Array.isArray(data.assets)) {
+          setAssets(data.assets);
+          setLocalData('budgetstar_assets', data.assets);
+        }
+
+        // 6. Restore Savings & Accounts
+        if (Array.isArray(data.savings)) {
+          setSavings(data.savings);
+          setLocalData('budgetstar_savings', data.savings);
+        }
+        if (Array.isArray(data.savingsAccounts)) {
+          setSavingsAccounts(data.savingsAccounts);
+          setLocalData('budgetstar_savings_accounts', data.savingsAccounts);
+        }
+
+        setDemoNotice("Complete backup restored! User profiles, payment methods, categories, and all transaction records loaded successfully.");
+        setTimeout(() => setDemoNotice(null), 5000);
+      } catch (err) {
+        console.error("JSON import error:", err);
+        alert("Failed to parse JSON backup file: " + (err.message || 'Invalid format'));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const handleForceUpdate = async () => {
     setIsUpdating(true);
     try {
@@ -1361,9 +1453,10 @@ export default function App() {
 
   // All available categories and payment methods
   const allCategories = useMemo(() => {
-    const set = new Set([...Object.keys(CATEGORY_COLORS), ...transactions.map(t => t.category)].filter(Boolean));
+    const list = settings.customCategories || Object.keys(CATEGORY_COLORS);
+    const set = new Set([...list, ...transactions.map(t => t.category)].filter(Boolean));
     return Array.from(set);
-  }, [transactions]);
+  }, [settings.customCategories, transactions]);
 
   const allMethods = useMemo(() => {
     const set = new Set([...settings.paymentMethods, ...transactions.map(t => t.method)].filter(Boolean));
@@ -1586,6 +1679,19 @@ export default function App() {
         </Group>
 
         <Group gap="xs">
+          <ActionIcon
+            component="a"
+            href="https://github.com/elricclark1/BudgetStar"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="subtle"
+            color="gray"
+            size="md"
+            title="Open Source on GitHub"
+            aria-label="Open Source on GitHub"
+          >
+            <IconBrandGithub size="1.2rem" />
+          </ActionIcon>
           <Badge 
             variant="light" 
             size="md"
@@ -2247,15 +2353,43 @@ export default function App() {
                     onChange={e => setSearchQuery(e.target.value)}
                     style={{ flex: 1, minWidth: 260 }}
                   />
-                  <Group gap="xs">
+                  <Group gap="xs" wrap="wrap">
                     <Button 
                       variant="outline" 
                       color="teal" 
                       size="sm" 
                       leftSection={<IconDownload size="1rem" />}
-                      onClick={handleExportCSV}
+                      onClick={handleExportJSON}
+                      title="Download complete JSON backup including configs and all records"
                     >
-                      EXPORT CSV
+                      BACKUP (JSON)
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      color="cyan" 
+                      size="sm" 
+                      leftSection={<IconUpload size="1rem" />}
+                      onClick={() => document.getElementById('log-json-import').click()}
+                      title="Restore complete JSON backup"
+                    >
+                      RESTORE (JSON)
+                    </Button>
+                    <input
+                      type="file"
+                      id="log-json-import"
+                      style={{ display: 'none' }}
+                      accept=".json"
+                      onChange={handleImportJSON}
+                    />
+                    <Button 
+                      variant="subtle" 
+                      color="gray" 
+                      size="sm" 
+                      leftSection={<IconDownload size="1rem" />}
+                      onClick={handleExportCSV}
+                      title="Export transactions table as CSV spreadsheet"
+                    >
+                      CSV
                     </Button>
                     <Button
                       color="green.8"
@@ -2980,6 +3114,78 @@ export default function App() {
                 </Group>
               </Paper>
 
+              {/* Spending Categories Manager */}
+              <Paper p="md" withBorder style={{ backgroundColor: '#1E1E24', borderColor: '#2E2E33' }}>
+                <Group gap="xs" mb="xs">
+                  <ThemeIcon variant="light" color="orange" size="sm">
+                    <IconTarget size="1rem" />
+                  </ThemeIcon>
+                  <Title order={4}>Spending Categories</Title>
+                </Group>
+                <Text size="xs" c="dimmed" mb="md">
+                  Manage custom categories available for transaction logging, budget goals, and necessity ratings.
+                </Text>
+
+                <Group mb="md">
+                  <TextInput
+                    id="new-category-input"
+                    size="xs"
+                    placeholder="e.g. Coffee & Snacks, Pet Care"
+                    style={{ flex: 1, maxWidth: 300 }}
+                  />
+                  <Button
+                    size="xs"
+                    color="orange"
+                    onClick={() => {
+                      const input = document.getElementById('new-category-input');
+                      const val = input.value.trim();
+                      const currentCats = settings.customCategories || Object.keys(CATEGORY_COLORS);
+                      if (val && !currentCats.includes(val)) {
+                        setSettings({
+                          ...settings,
+                          customCategories: [...currentCats, val]
+                        });
+                        input.value = '';
+                      }
+                    }}
+                  >
+                    ADD CATEGORY
+                  </Button>
+                </Group>
+
+                <Group gap="xs" wrap="wrap">
+                  {(settings.customCategories || Object.keys(CATEGORY_COLORS)).map(c => (
+                    <Badge 
+                      key={c} 
+                      variant="outline" 
+                      color="gray" 
+                      size="md" 
+                      leftSection={
+                        <Box style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: getCategoryColor(c), marginRight: 4 }} />
+                      }
+                      rightSection={
+                        <ActionIcon 
+                          variant="transparent" 
+                          size="xs" 
+                          color="red"
+                          onClick={() => {
+                            const currentCats = settings.customCategories || Object.keys(CATEGORY_COLORS);
+                            setSettings({
+                              ...settings,
+                              customCategories: currentCats.filter(x => x !== c)
+                            });
+                          }}
+                        >
+                          <IconX size="0.75rem" />
+                        </ActionIcon>
+                      }
+                    >
+                      {c}
+                    </Badge>
+                  ))}
+                </Group>
+              </Paper>
+
               {/* Income & Math Settings */}
               <Paper p="md" withBorder style={{ backgroundColor: '#1E1E24', borderColor: '#2E2E33' }}>
                 <Title order={4} mb="xs">Income & Baseline Settings</Title>
@@ -3011,22 +3217,58 @@ export default function App() {
 
               {/* Sample Data & Database Management */}
               <Paper p="md" withBorder style={{ backgroundColor: '#1E1E24', borderColor: '#2E2E33' }}>
-                <Title order={4} mb="xs">Data Management & Exploration</Title>
+                <Title order={4} mb="xs">Data Management & Full Backups</Title>
                 <Text size="xs" c="dimmed" mb="md">
-                  Seed realistic demonstration transactions, export your budget data as CSV, or clear the database.
+                  Export or restore your complete budget, including all custom household members, card names, custom categories, budget goals, subscriptions, assets, and transactions.
                 </Text>
+                
+                <Paper p="sm" mb="md" withBorder style={{ backgroundColor: '#141416', borderColor: '#27272A' }}>
+                  <Text fw={700} size="xs" c="teal.4" mb={4}>COMPLETE BACKUP &amp; RESTORE (DATA + CONFIGS)</Text>
+                  <Text size="xs" c="dimmed" mb="sm">
+                    Downloads a single JSON file with all your personalized settings and transaction records. Perfect for moving your data between devices or keeping safe offline snapshots.
+                  </Text>
+                  <Group wrap="wrap" gap="xs">
+                    <Button 
+                      variant="filled" 
+                      color="teal" 
+                      size="sm" 
+                      leftSection={<IconDownload size="1rem" />}
+                      onClick={handleExportJSON}
+                    >
+                      EXPORT ALL DATA &amp; SETTINGS (.JSON)
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      color="cyan" 
+                      size="sm" 
+                      leftSection={<IconUpload size="1rem" />}
+                      onClick={() => document.getElementById('settings-json-import').click()}
+                    >
+                      RESTORE ALL DATA &amp; SETTINGS (.JSON)
+                    </Button>
+                    <input
+                      type="file"
+                      id="settings-json-import"
+                      style={{ display: 'none' }}
+                      accept=".json"
+                      onChange={handleImportJSON}
+                    />
+                  </Group>
+                </Paper>
+
                 <Group wrap="wrap">
                   <Button 
                     color="teal" 
                     size="sm" 
+                    variant="light"
                     leftSection={<IconDatabase size="1rem" />}
                     onClick={handleSeedDemoData}
                   >
                     LOAD DEMO DATA
                   </Button>
                   <Button 
-                    variant="outline" 
-                    color="teal" 
+                    variant="subtle" 
+                    color="gray" 
                     size="sm" 
                     leftSection={<IconDownload size="1rem" />}
                     onClick={handleExportCSV}
@@ -3034,8 +3276,8 @@ export default function App() {
                     EXPORT CSV
                   </Button>
                   <Button 
-                    variant="outline" 
-                    color="indigo" 
+                    variant="subtle" 
+                    color="gray" 
                     size="sm" 
                     leftSection={<IconUpload size="1rem" />}
                     onClick={() => document.getElementById('settings-csv-import').click()}
@@ -3110,12 +3352,26 @@ export default function App() {
           {view === 'info' && (
             <Stack gap="xl">
               <Paper p="xl" withBorder style={{ backgroundColor: '#1E1E24', borderColor: '#2E2E33' }}>
-                <Group justify="space-between" align="center" mb="md">
+                <Group justify="space-between" align="center" mb="md" wrap="wrap">
                   <div>
                     <Title order={3} style={{ color: ACCENT_COLOR, letterSpacing: '-0.5px' }}>About BudgetStar</Title>
                     <Text size="sm" c="dimmed">Minimalist, distraction-free personal finance tracker.</Text>
                   </div>
-                  <Badge color="teal" size="lg" variant="light">v2.0.0 Open Source</Badge>
+                  <Group gap="xs">
+                    <Badge color="teal" size="lg" variant="light">v2.0.0 Open Source</Badge>
+                    <Button
+                      component="a"
+                      href="https://github.com/elricclark1/BudgetStar"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      variant="outline"
+                      color="gray"
+                      size="xs"
+                      leftSection={<IconBrandGithub size="1rem" />}
+                    >
+                      VIEW ON GITHUB
+                    </Button>
+                  </Group>
                 </Group>
 
                 <Text size="sm" mb="lg" style={{ lineHeight: 1.7 }}>
