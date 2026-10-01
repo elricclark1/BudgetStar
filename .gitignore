@@ -29,8 +29,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# OS and Editor files
+# OS, Editor, and Agent files
 .DS_Store
 .idea/
 .vscode/
 *.swp
+GEMINI.md
