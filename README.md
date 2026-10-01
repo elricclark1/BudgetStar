@@ -4,28 +4,7 @@ A self-hosted personal finance and budgeting dashboard built to track household 
 
 ---
 
-## Why I Built This
-
-I built BudgetStar because most budgeting apps either require paid subscriptions, rely on third-party bank syncing services, or don't handle daily pacing well. In typical apps, paying rent or a large insurance bill on the 1st of the month makes it look like you've blown your entire budget on day one. 
-
-I wanted a lightweight, distraction-free tool running on my own hardware where financial data stays in a local SQLite file. I put this together using FastAPI, React (Mantine UI), and Docker, vibe-coding the implementation with AI assistance and testing it by hand against our own household expenses.
-
----
-
-## What It Does
-
-- **Overview & Pacing:** Tracks your month-to-date spending against a 3-month rolling baseline. Fixed living costs (rent, utilities) are separated from variable spending so lump-sum bills don't throw off your daily pace limit.
-- **Battery Budget Goals:** Category budget bars that start at 100% at the beginning of the month and deplete as you log purchases. Supports single categories or grouping multiple categories into a single target (e.g. Groceries + Fuel).
-- **Purchase Log:** Filterable transaction ledger with real-time keyword search, sorting, 1★ to 5★ necessity ratings, and full CSV export/import.
-- **Household Profiles:** Switch between individual member spending and shared household expenses. Member names and badge colors are configurable in Settings.
-- **Subscriptions:** Recurring expense tracker that highlights upcoming billing days and calculates total monthly recurring commitments.
-- **Asset Tracker:** Basic net-worth ledger for physical and financial assets (vehicles, electronics, tools) tracking purchase cost vs. current valuation.
-- **Cashflow:** Monthly inflow vs. outflow tracking, with an optional toggle for 10% charitable giving or tithing calculations.
-- **Demo Sandbox:** A one-click button in Settings to populate realistic sample data so you can test all views before logging your own numbers.
-
----
-
-## Installation & Running
+## Quickstart (Install & Run)
 
 ### Using Docker Compose (Recommended)
 
@@ -61,6 +40,27 @@ cd frontend
 npm install
 npm run dev
 ```
+
+---
+
+## Why I Built This
+
+I built BudgetStar because most budgeting apps either require paid subscriptions, rely on third-party bank syncing services, or don't handle daily pacing well. In typical apps, paying rent or a large insurance bill on the 1st of the month makes it look like you've blown your entire budget on day one. 
+
+I wanted a lightweight, distraction-free tool running on my own hardware where financial data stays in a local SQLite file. I put this together using FastAPI, React (Mantine UI), and Docker, vibe-coding the implementation with AI assistance and testing it by hand against our own household expenses.
+
+---
+
+## What It Does
+
+- **Overview & Pacing:** Tracks your month-to-date spending against a 3-month rolling baseline. Fixed living costs (rent, utilities) are separated from variable spending so lump-sum bills don't throw off your daily pace limit.
+- **Battery Budget Goals:** Category budget bars that start at 100% at the beginning of the month and deplete as you log purchases. Supports single categories or grouping multiple categories into a single target (e.g. Groceries + Fuel).
+- **Purchase Log:** Filterable transaction ledger with real-time keyword search, sorting, 1★ to 5★ necessity ratings, and full CSV export/import.
+- **Household Profiles:** Switch between individual member spending and shared household expenses. Member names and badge colors are configurable in Settings.
+- **Subscriptions:** Recurring expense tracker that highlights upcoming billing days and calculates total monthly recurring commitments.
+- **Asset Tracker:** Basic net-worth ledger for physical and financial assets (vehicles, electronics, tools) tracking purchase cost vs. current valuation.
+- **Cashflow:** Monthly inflow vs. outflow tracking, with an optional toggle for 10% charitable giving or tithing calculations.
+- **Demo Sandbox:** A one-click button in Settings to populate realistic sample data so you can test all views before logging your own numbers.
 
 ---
 
