@@ -2,6 +2,8 @@
 
 A self-hosted personal finance and budgeting dashboard built to track household spending, daily pacing, and category goals on a local server.
 
+- **Live Web App:** [https://budgetstar.serpilas.com](https://budgetstar.serpilas.com) (Runs directly in your browser, 100% private offline storage, zero accounts required)
+
 ---
 
 ## Quickstart (Install & Run)
@@ -60,6 +62,7 @@ I wanted a lightweight, distraction-free tool running on my own hardware where f
 - **Subscriptions:** Recurring expense tracker that highlights upcoming billing days and calculates total monthly recurring commitments.
 - **Asset Tracker:** Basic net-worth ledger for physical and financial assets (vehicles, electronics, tools) tracking purchase cost vs. current valuation.
 - **Cashflow:** Monthly inflow vs. outflow tracking, with an optional toggle for 10% charitable giving or tithing calculations.
+- **Complete Backup & Portability:** Download or restore a complete `.json` backup including your custom configurations (user names, card names, custom categories) alongside all transactions, goals, subscriptions, and assets.
 - **Demo Sandbox:** A one-click button in Settings to populate realistic sample data so you can test all views before logging your own numbers.
 
 ---
