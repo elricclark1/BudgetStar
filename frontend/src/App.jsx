@@ -3124,7 +3124,7 @@ export default function App() {
 
                 <Divider my="md" color="#27272A" />
 
-                <Title order={4} mb="xs">Serpilas has 4 rules:</Title>
+                <Title order={4} mb="xs">Core Principles:</Title>
                 <Stack gap="sm" mb="xl">
                   <Paper p="sm" withBorder style={{ backgroundColor: '#141416', borderColor: '#27272A' }}>
                     <Text fw={700} size="sm" c="teal.4">1. Ad-Free Experience</Text>
