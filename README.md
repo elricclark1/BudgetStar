@@ -1,70 +1,88 @@
 # BudgetStar
 
-A minimal, distraction-free, self-hosted personal finance dashboard.
-
-BudgetStar gives you a clear, honest view of your spending, daily pace limits, and category budgets. Built for speed, high legibility, and 100% data ownership—no accounts, no cloud subscriptions, and zero tracking.
+A self-hosted personal finance and budgeting dashboard built to track household spending, daily pacing, and category goals on a local server.
 
 ---
 
-## Quickstart
+## Why I Built This
 
-Run BudgetStar locally using Docker Compose:
+I built BudgetStar because most budgeting apps either require paid subscriptions, rely on third-party bank syncing services, or don't handle daily pacing well. In typical apps, paying rent or a large insurance bill on the 1st of the month makes it look like you've blown your entire budget on day one. 
+
+I wanted a lightweight, distraction-free tool running on my own hardware where financial data stays in a local SQLite file. I put this together using FastAPI, React (Mantine UI), and Docker, vibe-coding the implementation with AI assistance and testing it by hand against our own household expenses.
+
+---
+
+## What It Does
+
+- **Overview & Pacing:** Tracks your month-to-date spending against a 3-month rolling baseline. Fixed living costs (rent, utilities) are separated from variable spending so lump-sum bills don't throw off your daily pace limit.
+- **Battery Budget Goals:** Category budget bars that start at 100% at the beginning of the month and deplete as you log purchases. Supports single categories or grouping multiple categories into a single target (e.g. Groceries + Fuel).
+- **Purchase Log:** Filterable transaction ledger with real-time keyword search, sorting, 1★ to 5★ necessity ratings, and full CSV export/import.
+- **Household Profiles:** Switch between individual member spending and shared household expenses. Member names and badge colors are configurable in Settings.
+- **Subscriptions:** Recurring expense tracker that highlights upcoming billing days and calculates total monthly recurring commitments.
+- **Asset Tracker:** Basic net-worth ledger for physical and financial assets (vehicles, electronics, tools) tracking purchase cost vs. current valuation.
+- **Cashflow:** Monthly inflow vs. outflow tracking, with an optional toggle for 10% charitable giving or tithing calculations.
+- **Demo Sandbox:** A one-click button in Settings to populate realistic sample data so you can test all views before logging your own numbers.
+
+---
+
+## Installation & Running
+
+### Using Docker Compose (Recommended)
 
 ```bash
+# 1. Clone the repository
 git clone https://github.com/elricclark1/BudgetStar.git
 cd BudgetStar
+
+# 2. Start the services
 docker compose up -d
 ```
 
-- **Web Dashboard:** [http://localhost:3000](http://localhost:3000)
-- **API Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Frontend:** [http://localhost:3000](http://localhost:3000)
+- **API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
 
-To customize port bindings or database paths, copy `.env.example` to `.env` before running.
+To change ports or database settings, copy `.env.example` to `.env` before starting.
 
----
+### Running Manually (Without Docker)
 
-## Core Features
+#### Backend (Python 3.11+)
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 
-- **Pacing & Variable Baseline:** Compares month-to-date spending against a 3-month rolling baseline. Fixed living costs (rent, utilities) are isolated so lump-sum 1st-of-month payments don't break your daily pace limit.
-- **Battery-Style Budget Goals:** Goals start at 100% on the 1st of the month and deplete as you log purchases, with adaptive color progression (Green $\rightarrow$ Yellow $\rightarrow$ Red). Supports single or multi-category targets.
-- **Household Profiles:** Seamlessly switch between individual members or view shared household spending with custom badge colors.
-- **Necessity Matrix:** Rate purchases 1★ to 5★ to uncover discretionary spending habits and identify painless cutbacks.
-- **Subscriptions & Asset Tracking:** Keep tabs on recurring monthly bill dates, plus track depreciating/appreciating asset valuations.
-- **Universal Cashflow:** Inflow vs. outflow tracking with an optional 10% charitable giving / tithing calculation mode.
-- **Data Portability:** Full CSV Export and Import in the Purchase Log for easy backups and bank statement migration.
-- **One-Click Demo Sandbox:** Load 40+ realistic sample transactions from Settings to explore all charts and widgets before logging your own records.
+uvicorn main:app --reload --port 8000
+```
 
----
-
-## Where Your Data Lives
-
-All data is stored locally on your machine in a SQLite database (`budgetstar.db` inside the persistent Docker volume `budgetstar_data`). Nothing is ever sent to external cloud servers, third parties, or telemetry trackers.
-
-### Backing Up Your Data
-- **CSV Export:** Click **"Export CSV"** in the Purchase Log.
-- **Database Snapshot:** Copy the SQLite database directly from the running container:
-  ```bash
-  docker cp budgetstar-backend:/app/data/budgetstar.db ./budgetstar-backup.db
-  ```
+#### Frontend (Node 18+)
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ---
 
-## AI & Operational Transparency
+## Data Storage & Privacy
 
-BudgetStar is vibe-coded with AI assistance, thoroughly human-tested, and self-hosted on real bare-metal hardware.
+All data is stored in a local SQLite database (`budgetstar.db` inside the `budgetstar_data` Docker volume or `backend/data/`). The application runs entirely on your own machine—there are no cloud accounts, external network calls, or telemetry.
 
-AI automation isn't used as a corporate shortcut—it is the superpower that allows a solo builder to create, polish, and maintain high-quality, completely free tools without ads, venture capital, or paywalls. Every feature, database model, and interface component was designed, tested, and iterated through real-world personal use.
+To create a backup of your database:
+```bash
+docker cp budgetstar-backend:/app/data/budgetstar.db ./backup.db
+```
 
 ---
 
 ## Tech Stack
 
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy 2.0, SQLite (WAL mode)
 - **Frontend:** React 18, Vite, Mantine UI v7, Recharts, Tabler Icons
-- **Backend:** Python 3.11, FastAPI, SQLAlchemy 2.0 ORM, SQLite (WAL mode)
-- **Deployment:** Docker, Docker Compose, Nginx Alpine
+- **Deployment:** Docker, Docker Compose, Nginx
 
 ---
 
 ## License
 
-[MIT License](LICENSE). Free to use, modify, distribute, and self-host.
+[MIT](LICENSE)
