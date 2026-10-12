@@ -239,6 +239,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [demoNotice, setDemoNotice] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Standalone offline mode flag
   const [isStandalone, setIsStandalone] = useState(
@@ -339,12 +340,12 @@ export default function App() {
     if (isStandalone) {
       const items = getLocalData(localStorageKey);
       if (isUpdate && id !== null) {
-        const index = items.findIndex(item => item.id === id);
+        const index = items.findIndex(item => String(item.id) === String(id));
         if (index !== -1) {
           items[index] = { ...items[index], ...payload, id };
         }
       } else {
-        const newItem = { ...payload, id: Date.now() + Math.floor(Math.random() * 1000) };
+        const newItem = { ...payload, id: Date.now() * 1000 + Math.floor(Math.random() * 1000) };
         items.unshift(newItem);
       }
       setLocalData(localStorageKey, items);
@@ -360,14 +361,24 @@ export default function App() {
   };
 
   const performDelete = async (apiEndpoint, localStorageKey, id) => {
+    // Always purge item from local storage cache immediately
+    const items = getLocalData(localStorageKey);
+    const filtered = items.filter(item => String(item.id) !== String(id));
+    setLocalData(localStorageKey, filtered);
+
     if (isStandalone) {
-      const items = getLocalData(localStorageKey);
-      const filtered = items.filter(item => item.id !== id);
-      setLocalData(localStorageKey, filtered);
       return { data: filtered };
     } else {
       const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
-      return await axios.delete(`${baseUrl}/api/${apiEndpoint}/${id}`);
+      try {
+        return await axios.delete(`${baseUrl}/api/${apiEndpoint}/${id}`);
+      } catch (err) {
+        // If 404, the item was already deleted on the server; treat as successful deletion
+        if (err.response?.status === 404) {
+          return { data: filtered };
+        }
+        throw err;
+      }
     }
   };
 
@@ -507,7 +518,6 @@ export default function App() {
       initializeFilters(response.data);
     } catch (error) {
       console.warn("Backend error fetching transactions, falling back to local storage:", error);
-      setIsStandalone(true);
       const data = getLocalData('budgetstar_transactions');
       setTransactions(data);
       initializeFilters(data);
@@ -561,7 +571,6 @@ export default function App() {
       setLocalData('budgetstar_goals', response.data);
     } catch (error) {
       console.warn("Backend error fetching goals, falling back to local storage:", error);
-      setIsStandalone(true);
       setGoals(sortGoalsByPerson(getLocalData('budgetstar_goals')));
     }
   };
@@ -578,7 +587,6 @@ export default function App() {
       setLocalData('budgetstar_recurrings', response.data);
     } catch (error) {
       console.warn("Backend error fetching recurrings, falling back to local storage:", error);
-      setIsStandalone(true);
       setRecurrings(getLocalData('budgetstar_recurrings'));
     }
   };
@@ -595,7 +603,6 @@ export default function App() {
       setLocalData('budgetstar_assets', response.data);
     } catch (error) {
       console.warn("Backend error fetching assets, falling back to local storage:", error);
-      setIsStandalone(true);
       setAssets(getLocalData('budgetstar_assets'));
     }
   };
@@ -644,7 +651,9 @@ export default function App() {
 
   // Transaction CRUD Handlers
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!form.description || form.amount === '' || isNaN(form.amount)) return;
+    setIsSubmitting(true);
     try {
       const payload = {
         date: dayjs(form.date).format('YYYY-MM-DD'),
@@ -680,23 +689,30 @@ export default function App() {
       fetchTransactions();
     } catch (error) {
       console.error("Error saving transaction:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
     if (confirm('Delete this transaction record?')) {
+      // Optimistic update: instantly remove from visible table
+      setTransactions(prev => prev.filter(t => String(t.id) !== String(id)));
       try {
         await performDelete('transactions', 'budgetstar_transactions', id);
-        fetchTransactions();
       } catch (error) {
         console.error("Error deleting transaction:", error);
+        alert("Failed to delete transaction from server. Re-syncing...");
+        fetchTransactions();
       }
     }
   };
 
   // Goal CRUD Handlers
   const handleGoalSubmit = async () => {
+    if (isSubmitting) return;
     if (goalForm.categories.length === 0 || !goalForm.amount) return;
+    setIsSubmitting(true);
     try {
       const payload = {
         category: goalForm.categories.join(', '),
@@ -717,23 +733,28 @@ export default function App() {
       fetchGoals();
     } catch (error) {
       console.error("Error saving goal:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteGoal = async (id) => {
     if (confirm('Delete this budget goal?')) {
+      setGoals(prev => prev.filter(g => String(g.id) !== String(id)));
       try {
         await performDelete('goals', 'budgetstar_goals', id);
-        fetchGoals();
       } catch (error) {
         console.error("Error deleting goal:", error);
+        fetchGoals();
       }
     }
   };
 
   // Recurring CRUD Handlers
   const handleRecurringSubmit = async () => {
+    if (isSubmitting) return;
     if (!recurringForm.name || !recurringForm.amount) return;
+    setIsSubmitting(true);
     try {
       const payload = {
         name: recurringForm.name.trim(),
@@ -758,23 +779,28 @@ export default function App() {
       fetchRecurrings();
     } catch (error) {
       console.error("Error saving recurring subscription:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteRecurring = async (id) => {
     if (confirm('Delete this recurring expense?')) {
+      setRecurrings(prev => prev.filter(r => String(r.id) !== String(id)));
       try {
         await performDelete('recurrings', 'budgetstar_recurrings', id);
-        fetchRecurrings();
       } catch (error) {
         console.error("Error deleting recurring subscription:", error);
+        fetchRecurrings();
       }
     }
   };
 
   // Asset CRUD Handlers
   const handleAssetSubmit = async () => {
+    if (isSubmitting) return;
     if (!assetForm.name) return;
+    setIsSubmitting(true);
     try {
       const payload = {
         name: assetForm.name.trim(),
@@ -801,23 +827,28 @@ export default function App() {
       fetchAssets();
     } catch (error) {
       console.error("Error saving asset:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteAsset = async (id) => {
     if (confirm('Delete this asset entry?')) {
+      setAssets(prev => prev.filter(a => String(a.id) !== String(id)));
       try {
         await performDelete('assets', 'budgetstar_assets', id);
-        fetchAssets();
       } catch (error) {
         console.error("Error deleting asset:", error);
+        fetchAssets();
       }
     }
   };
 
   // Savings CRUD Handlers
   const handleSavingSubmit = async () => {
+    if (isSubmitting) return;
     if (!savingForm.amount) return;
+    setIsSubmitting(true);
     try {
       const payload = {
         date: dayjs(savingForm.date).format('YYYY-MM-DD'),
@@ -839,16 +870,19 @@ export default function App() {
       fetchSavings();
     } catch (error) {
       console.error("Error saving record:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteSaving = async (id) => {
     if (confirm('Delete this savings balance log?')) {
+      setSavings(prev => prev.filter(s => String(s.id) !== String(id)));
       try {
         await performDelete('savings', 'budgetstar_savings', id);
-        fetchSavings();
       } catch (error) {
         console.error("Error deleting savings record:", error);
+        fetchSavings();
       }
     }
   };
@@ -1534,7 +1568,7 @@ export default function App() {
             styles={{ label: { fontWeight: 600 } }}
           />
           <NavLink
-            label="About & Rules"
+            label="About"
             leftSection={<IconInfoCircle size="1.1rem" />}
             active={view === 'info'}
             onClick={() => { setView('info'); if (mobileOpened) closeMobile(); }}
@@ -1851,8 +1885,8 @@ export default function App() {
                 </Grid.Col>
                 <Grid.Col span={12}>
                   <Group justify="flex-end">
-                    <Button variant="default" onClick={toggleForm}>Cancel</Button>
-                    <Button color="green.8" onClick={handleSubmit}>
+                    <Button variant="default" onClick={toggleForm} disabled={isSubmitting}>Cancel</Button>
+                    <Button color="green.8" onClick={handleSubmit} loading={isSubmitting} disabled={isSubmitting}>
                       {editingId ? 'UPDATE TRANSACTION' : 'SAVE EXPENSE'}
                     </Button>
                   </Group>
@@ -2574,7 +2608,7 @@ export default function App() {
                           Cancel
                         </Button>
                       )}
-                      <Button color="teal" onClick={handleGoalSubmit}>
+                      <Button color="teal" onClick={handleGoalSubmit} loading={isSubmitting} disabled={isSubmitting}>
                         {editingGoal ? 'UPDATE GOAL' : 'CREATE GOAL'}
                       </Button>
                     </Group>
@@ -2672,7 +2706,7 @@ export default function App() {
                           Cancel
                         </Button>
                       )}
-                      <Button color="teal" onClick={handleRecurringSubmit}>
+                      <Button color="teal" onClick={handleRecurringSubmit} loading={isSubmitting} disabled={isSubmitting}>
                         {editingRecurring ? 'UPDATE SUBSCRIPTION' : 'SAVE SUBSCRIPTION'}
                       </Button>
                     </Group>
@@ -2819,7 +2853,7 @@ export default function App() {
                           Cancel
                         </Button>
                       )}
-                      <Button color="teal" onClick={handleAssetSubmit}>
+                      <Button color="teal" onClick={handleAssetSubmit} loading={isSubmitting} disabled={isSubmitting}>
                         {editingAsset ? 'UPDATE ASSET' : 'SAVE ASSET'}
                       </Button>
                     </Group>
@@ -2907,7 +2941,7 @@ export default function App() {
                   </Grid.Col>
                   <Grid.Col span={12}>
                     <Group justify="flex-end">
-                      <Button color="teal" onClick={handleSavingSubmit}>
+                      <Button color="teal" onClick={handleSavingSubmit} loading={isSubmitting} disabled={isSubmitting}>
                         RECORD BALANCE
                       </Button>
                     </Group>
@@ -3348,7 +3382,7 @@ export default function App() {
             </Stack>
           )}
 
-          {/* VIEW: ABOUT & SERPILAS RULES */}
+          {/* VIEW: ABOUT */}
           {view === 'info' && (
             <Stack gap="xl">
               <Paper p="xl" withBorder style={{ backgroundColor: '#1E1E24', borderColor: '#2E2E33' }}>
@@ -3377,36 +3411,6 @@ export default function App() {
                 <Text size="sm" mb="lg" style={{ lineHeight: 1.7 }}>
                   BudgetStar is an independent digital workshop application built by Elric. Designed for self-hosters and families who value distraction-free utility, high legibility, and full ownership of their data.
                 </Text>
-
-                <Divider my="md" color="#27272A" />
-
-                <Title order={4} mb="xs">Core Principles:</Title>
-                <Stack gap="sm" mb="xl">
-                  <Paper p="sm" withBorder style={{ backgroundColor: '#141416', borderColor: '#27272A' }}>
-                    <Text fw={700} size="sm" c="teal.4">1. Ad-Free Experience</Text>
-                    <Text size="xs" c="dimmed">
-                      Clean, tracker-free web applications engineered purely for utility, performance, and user satisfaction without invasive telemetry or crowding advertisements.
-                    </Text>
-                  </Paper>
-                  <Paper p="sm" withBorder style={{ backgroundColor: '#141416', borderColor: '#27272A' }}>
-                    <Text fw={700} size="sm" c="teal.4">2. Transparent & Open Source</Text>
-                    <Text size="xs" c="dimmed">
-                      Public code built in the open. Anyone can inspect how it works, see what happens under the hood, or host it themselves. We want our tools to be useful and customizable to you.
-                    </Text>
-                  </Paper>
-                  <Paper p="sm" withBorder style={{ backgroundColor: '#141416', borderColor: '#27272A' }}>
-                    <Text fw={700} size="sm" c="teal.4">3. No Accounts Required</Text>
-                    <Text size="xs" c="dimmed">
-                      Instant access to every tool without forced accounts or remembering passwords. Data is persisted directly in your local SQLite database or your browser's private local storage.
-                    </Text>
-                  </Paper>
-                  <Paper p="sm" withBorder style={{ backgroundColor: '#141416', borderColor: '#27272A' }}>
-                    <Text fw={700} size="sm" c="teal.4">4. Zero Data Selling or Tracking</Text>
-                    <Text size="xs" c="dimmed">
-                      User activity stays strictly theirs. Nothing is tracked, packaged for advertising profiles, or sold to third-party data brokers.
-                    </Text>
-                  </Paper>
-                </Stack>
 
                 <Divider my="md" color="#27272A" />
 
