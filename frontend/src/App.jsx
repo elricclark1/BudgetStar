@@ -1232,7 +1232,7 @@ export default function App() {
     const activeMonths = pastMonthsVariableSpend.filter(amt => amt > 0);
     const past3MonthsAvg = activeMonths.length > 0 
       ? activeMonths.reduce((a, b) => a + b, 0) / activeMonths.length 
-      : (paceSpentThisMonth || 500);
+      : 0;
 
     const expectedSpendToDate = (past3MonthsAvg / daysInMonth) * dayOfMonth;
     const pacePercent = expectedSpendToDate > 0 ? (paceSpentThisMonth / expectedSpendToDate) * 100 : 0;
@@ -1240,7 +1240,9 @@ export default function App() {
     const remainingDays = Math.max(1, daysInMonth - dayOfMonth + 1);
     const dailyTarget = past3MonthsAvg / daysInMonth;
     const actualDailyAvg = paceSpentThisMonth / Math.max(1, dayOfMonth);
-    const maxDailyRemaining = Math.max(0, (past3MonthsAvg - paceSpentThisMonth) / remainingDays);
+    const maxDailyRemaining = past3MonthsAvg > 0
+      ? Math.max(0, (past3MonthsAvg - paceSpentThisMonth) / remainingDays)
+      : 0;
 
     return {
       total,
@@ -1918,11 +1920,11 @@ export default function App() {
 
                 <Paper p="md" withBorder style={{ backgroundColor: '#1E1E24', borderColor: '#2E2E33', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <Text size="xs" c="dimmed" fw={700}>MONTHLY PACE</Text>
-                  <Text fz={{ base: '1.4rem', sm: '1.6rem', md: '1.8rem' }} fw={800} my={4} c={stats.pacePercent <= 100 ? "green.4" : "red.4"}>
-                    {stats.pacePercent.toFixed(0)}%
+                  <Text fz={{ base: '1.4rem', sm: '1.6rem', md: '1.8rem' }} fw={800} my={4} c={stats.past3MonthsAvg > 0 ? (stats.pacePercent <= 100 ? "green.4" : "red.4") : "dimmed"}>
+                    {stats.past3MonthsAvg > 0 ? `${stats.pacePercent.toFixed(0)}%` : '—'}
                   </Text>
                   <Text size="xs" c="dimmed" title="Comparison against past 3-month variable spending baseline">
-                    vs 3-mo pace (${stats.past3MonthsAvg.toFixed(0)}/mo)
+                    {stats.past3MonthsAvg > 0 ? `vs 3-mo pace ($${stats.past3MonthsAvg.toFixed(0)}/mo)` : 'no baseline yet'}
                   </Text>
                 </Paper>
 
@@ -1936,10 +1938,14 @@ export default function App() {
 
                 <Paper p="md" withBorder style={{ backgroundColor: '#1E1E24', borderColor: '#2E2E33', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <Text size="xs" c="dimmed" fw={700}>DAILY PACE LIMIT</Text>
-                  <Text fz={{ base: '1.4rem', sm: '1.6rem', md: '1.8rem' }} fw={800} my={4} c={stats.maxDailyRemaining >= stats.actualDailyAvg ? "green.4" : "red.4"}>
-                    ${stats.maxDailyRemaining.toFixed(2)}/d
+                  <Text fz={{ base: '1.4rem', sm: '1.6rem', md: '1.8rem' }} fw={800} my={4} c={stats.past3MonthsAvg > 0 ? (stats.maxDailyRemaining >= stats.actualDailyAvg ? "green.4" : "red.4") : "dimmed"}>
+                    {stats.past3MonthsAvg > 0 ? `$${stats.maxDailyRemaining.toFixed(2)}/d` : '—'}
                   </Text>
-                  <Text size="xs" c="dimmed">Actual: ${stats.actualDailyAvg.toFixed(2)}/day</Text>
+                  <Text size="xs" c="dimmed">
+                    {stats.past3MonthsAvg > 0 
+                      ? `Actual: $${stats.actualDailyAvg.toFixed(2)}/day` 
+                      : (stats.actualDailyAvg > 0 ? `Actual: $${stats.actualDailyAvg.toFixed(2)}/day` : 'no baseline yet')}
+                  </Text>
                 </Paper>
               </SimpleGrid>
 
